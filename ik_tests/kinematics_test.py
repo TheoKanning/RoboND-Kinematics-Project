@@ -24,7 +24,7 @@ test_cases = [
         name='Joint 1',
         ee_pos=[1.8039, 1.175, 1.9465],
         ee_angles=[0, 0, .58],
-        wc_pos=[1.55, 1.001, 1.946],
+        wc_pos=[1.55, 1.009, 1.946],
         joint_angles=[.58, 0, 0, 0, 0, 0]),
     TestCase(
         name='Joint 2',
@@ -50,12 +50,12 @@ test_cases = [
 
 class KinematicsTest(unittest.TestCase):
 
-    def assert_position(self, actual, expected, places=2):
+    def assert_position(self, actual, expected, places=1):
         self.assertAlmostEqual(actual[0], expected[0], places, 'wrong x position')
         self.assertAlmostEqual(actual[1], expected[1], places, 'wrong y position')
         self.assertAlmostEqual(actual[2], expected[2], places, 'wrong z position')
 
-    def assert_angles(self, actual, expected, places=2):
+    def assert_angles(self, actual, expected, places=1):
         self.assertAlmostEqual(actual[0], expected[0], places, 'wrong roll angle')
         self.assertAlmostEqual(actual[1], expected[1], places, 'wrong pitch angle')
         self.assertAlmostEqual(actual[2], expected[2], places, 'wrong yaw angle')
@@ -70,7 +70,7 @@ class KinematicsTest(unittest.TestCase):
 
     def check_wrist_center(self, case):
         actual_wc = kinematics.get_wrist_center(case.ee_pos, case.ee_angles)
-        self.assert_position(actual_wc, case.wc_pos)
+        self.assert_position(actual_wc, case.wc_pos, places=3)
 
     def test_forward(self):
         for case in test_cases:
@@ -88,7 +88,7 @@ class KinematicsTest(unittest.TestCase):
                 angles = kinematics.get_inverse(case.ee_pos, case.ee_angles)
                 # assert first three angles directly
                 for i in range(0, 3):
-                    self.assertAlmostEqual(angles[i], case.joint_angles[i], 1, "wrong joint {} angle".format(i + 1))
+                    self.assertAlmostEqual(angles[i], case.joint_angles[i], 2, "wrong joint {} angle".format(i + 1))
 
                 calculated_pos, calculated_angle = kinematics.get_forward(angles)
                 self.assert_position(calculated_pos, case.ee_pos)

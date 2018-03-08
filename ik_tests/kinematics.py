@@ -219,13 +219,14 @@ def get_first_three_joints(wrist_pos):
     link3 = sqrt(s[a3]**2 + s[d4]**2)
     # wrist position projected onto plane of arm, minus joint 2 position
     projected_wc = sqrt(wrist_pos[0]**2 + wrist_pos[1]**2) - s[a1], wrist_pos[2] - s[d1]
-    d_wc = sqrt(projected_wc[0]**2 + projected_wc[1]**2)
+    d2_wc = sqrt(projected_wc[0]**2 + projected_wc[1]**2)
 
     # theta 2 is equal to the triangle angle plus the angle of the wc
-    theta2 = law_of_cosines(link2, d_wc, link3) + atan2(projected_wc[1], projected_wc[0])
+    theta2 = law_of_cosines(link2, d2_wc, link3) + atan2(projected_wc[1], projected_wc[0])
     theta2 = -theta2 + np.pi / 2  # correct for join 2 orientation
 
-    theta3 = - law_of_cosines(link2, link3, d_wc) + np.pi/2
+    # add correction because link is not straight
+    theta3 = - law_of_cosines(link2, link3, d2_wc) + np.pi/2 + atan2(s[a3], s[d4])
 
     return theta1, theta2, theta3
 
