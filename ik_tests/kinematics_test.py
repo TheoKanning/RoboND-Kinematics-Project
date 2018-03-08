@@ -4,15 +4,6 @@ from collections import namedtuple
 
 TestCase = namedtuple('TestCase', 'name ee_pos ee_angles wc_pos joint_angles')
 
-forward_test_cases = {1: [],
-                      2: [[[-0.56754, 0.93663, 3.0038],
-                           [0.62073, 0.48318, 0.38759, 0.480629]],
-                          [-0.638, 0.64198, 2.9988],
-                          [-0.79, -0.11, -2.33, 1.94, 1.14, -3.68]],
-                      3: [[[-1.3863, 0.02074, 0.90986],
-                           [0.01735, -0.2179, 0.9025, 0.371016]],
-                          [-1.1669, -0.17989, 0.85137],
-                          [-2.99, -0.12, 0.94, 4.06, 1.29, -4.12]]}
 test_cases = [
     TestCase(
         name='All Zero',
@@ -37,8 +28,7 @@ test_cases = [
         ee_pos=[2.16135, -1.42635, 1.55109],
         ee_angles=[1.654, .490, 0.062],
         wc_pos=[1.89451, -1.44302, 1.69366],
-        joint_angles=[-0.65, 0.45, -0.36, 0.95, 0.79, 0.49]
-    ),
+        joint_angles=[-0.65, 0.45, -0.36, 0.95, 0.79, 0.49]),
     TestCase(
         name='Random Configuration 2',
         ee_pos=[1.603, -1.011, 1.599],
@@ -91,8 +81,8 @@ class KinematicsTest(unittest.TestCase):
                     self.assertAlmostEqual(angles[i], case.joint_angles[i], 2, "wrong joint {} angle".format(i + 1))
 
                 calculated_pos, calculated_angle = kinematics.get_forward(angles)
-                self.assert_position(calculated_pos, case.ee_pos)
-                self.assert_angles(calculated_angle, case.ee_angles)
+                self.assert_position(calculated_pos, case.ee_pos, places=3)
+                self.assert_angles(calculated_angle, case.ee_angles, places=3)
 
     def test_rotation_matrix(self):
         original_angles = (.5, -.3, .7)

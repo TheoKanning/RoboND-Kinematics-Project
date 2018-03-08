@@ -126,42 +126,16 @@ def wrist_angles_from_transform(transform):
     :return: theta4, theta5, theta6
     """
     matrix = transform.evalf()
-    r11 = matrix[0, 0]
-    r12 = matrix[0, 1]
     r13 = matrix[0, 2]
     r21 = matrix[1, 0]
     r22 = matrix[1, 1]
     r23 = matrix[1, 2]
-    r31 = matrix[2, 0]
-    r32 = matrix[2, 1]
     r33 = matrix[2, 2]
-
-    # euler angles
-    # theta6 = atan2(r21, r11)
-    # theta5 = atan2(-r31, sqrt(r11 ** 2 + r21 ** 2))
-    # theta4 = atan2(r32, r33)
 
     # calculated by me
     theta4 = atan2(r33, -r13)
     theta5 = atan2(sqrt(r22 ** 2 + r21 ** 2), r23)
     theta6 = atan2(-r22, r21)
-
-    # from UMD class
-    # theta4 = atan2(r23, r13)
-    # theta5 = atan2(sqrt(r13 ** 2 + r23 ** 2), r33)
-    # theta6 = atan2(r32, -r31)
-
-    # From slack
-    # theta5 = atan2(sqrt(r13 ** 2 + r33 ** 2), r23)
-    # if sin(theta5) > 0:
-    #     theta4 = atan2(r33, -r13)
-    #     theta6 = atan2(-r22, r21)
-    # elif theta5 == 0:
-    #     theta4 = 0
-    #     theta6 = atan2(-r12, -r32)
-    # else:
-    #     theta4 = atan2(-r33, r13)
-    #     theta6 = atan2(r22, -r21)
 
     return theta4, theta5, theta6
 
@@ -242,20 +216,8 @@ def get_inverse(position, orientation):
     theta1, theta2, theta3 = get_first_three_joints(wc)
 
     r0_3 = (T0_1 * T1_2 * T2_3).evalf(subs={q1: theta1, q2: theta2, q3: theta3})[:3, :3]
-    r0_6 = Transpose(R_corr3) * create_rotation_matrix(orientation)
+    r0_6 = create_rotation_matrix(orientation) * R_corr3
     r3_6 = Transpose(r0_3) * r0_6
-    r3_6_sym = simplify(T3_4 * T4_5 * T5_6)
     theta4, theta5, theta6 = wrist_angles_from_transform(r3_6)
     return theta1, theta2, theta3, theta4, theta5, theta6
 
-# [
-# [6.12323399573677e-17*sin(q4)*sin(q6) - 7.49879891330929e-33*sin(q4)*cos(q6) - 1.0*sin(q5)*cos(q4) - 7.49879891330929e-33*sin(q6)*cos(q4)*cos(q5) - 6.12323399573677e-17*cos(q4)*cos(q5)*cos(q6),  1.22464679914735e-16*sin(q4)*sin(q6) + 1.0*sin(q4)*cos(q6) + 1.0*sin(q6)*cos(q4)*cos(q5) - 1.22464679914735e-16*cos(q4)*cos(q5)*cos(q6), -1.0*sin(q4)*sin(q6) + 1.22464679914735e-16*sin(q4)*cos(q6) - 6.12323399573677e-17*sin(q5)*cos(q4) + 1.22464679914735e-16*sin(q6)*cos(q4)*cos(q5) + 1.0*cos(q4)*cos(q5)*cos(q6), -0.054],
-# [                                                                                                     -7.49879891330929e-33*sin(q5)*sin(q6) - 6.12323399573677e-17*sin(q5)*cos(q6) + 1.0*cos(q5),                                                                                     (1.0*sin(q6) - 1.22464679914735e-16*cos(q6))*sin(q5),                                                                                       1.22464679914735e-16*sin(q5)*sin(q6) + 1.0*sin(q5)*cos(q6) + 6.12323399573677e-17*cos(q5),    1.5],
-# [1.0*sin(q4)*sin(q5) + 7.49879891330929e-33*sin(q4)*sin(q6)*cos(q5) + 6.12323399573677e-17*sin(q4)*cos(q5)*cos(q6) + 6.12323399573677e-17*sin(q6)*cos(q4) - 7.49879891330929e-33*cos(q4)*cos(q6), -1.0*sin(q4)*sin(q6)*cos(q5) + 1.22464679914735e-16*sin(q4)*cos(q5)*cos(q6) + 1.22464679914735e-16*sin(q6)*cos(q4) + 1.0*cos(q4)*cos(q6),  6.12323399573677e-17*sin(q4)*sin(q5) - 1.22464679914735e-16*sin(q4)*sin(q6)*cos(q5) - 1.0*sin(q4)*cos(q5)*cos(q6) - 1.0*sin(q6)*cos(q4) + 1.22464679914735e-16*cos(q4)*cos(q6),      0],
-# [                                                                                                                                                                                              0,                                                                                                                                        0,                                                                                                                                                                               0,      1]]
-
-# r3_6_blah = [
-#     [- sin(q5) * cos(q4), sin(q4) * cos(q6) + sin(q6) * cos(q4) * cos(q5), - sin(q4) * sin(q6) + cos(q4) * cos(q5) * cos(q6), -0.054],
-#     [cos(q5), 1.0 * sin(q6) * sin(q5), sin(q5) * cos(q6), 1.5],
-#     [sin(q4) * sin(q5), -sin(q4) * sin(q6) * cos(q5) + cos(q4) * cos(q6), - sin(q4) * cos(q5) * cos(q6) - sin(q6) * cos(q4), 0],
-#     [0, 0, 0, 1]]
