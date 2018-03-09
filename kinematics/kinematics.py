@@ -36,21 +36,6 @@ T4_5 = BASE_T.subs({alpha: alpha4, a: a4, d: d5, q: q5}).subs(s)
 T5_6 = BASE_T.subs({alpha: alpha5, a: a5, d: d6, q: q6}).subs(s)
 T6_G = BASE_T.subs({alpha: alpha6, a: a6, d: d7, q: q7}).subs(s)
 
-# print("creating transforms")
-# T0_2 = simplify(T0_1 * T1_2)
-# print("T0_2", T0_2)
-# T0_3 = simplify(T0_2 * T2_3)
-# print("T0_3", T0_3)
-# T0_4 = simplify(T0_3 * T3_4)
-# print("T0_4", T0_4)
-# T0_5 = simplify(T0_4 * T4_5)
-# print("T0_5", T0_5)
-# T0_6 = simplify(T0_5 * T5_6)
-# print("T0_6", T0_6)
-# T0_G = simplify(T0_6 * T6_G)
-# print("T0_G", T0_G)
-# print("done")
-
 # Gripper link orientation correction
 R_z = Matrix([[cos(np.pi), -sin(np.pi), 0, 0],
               [sin(np.pi), cos(np.pi), 0, 0],
@@ -64,16 +49,6 @@ R_y = Matrix([[cos(-np.pi/2), 0, sin(-np.pi/2), 0],
 
 R_corr = R_z * R_y
 R_corr3 = R_corr[:3, :3]
-
-# print("T0_1 = ", T0_1.evalf(subs={q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0}))
-# print("T0_2 = ", T0_2.evalf(subs={q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0}))
-# print("T0_3 = ", T0_3.evalf(subs={q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0}))
-# print("T0_4 = ", T0_4.evalf(subs={q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0}))
-# print("T0_5 = ", T0_5.evalf(subs={q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0}))
-# print("T0_6 = ", T0_6.evalf(subs={q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0}))
-# print("T0_G = ", T0_G.evalf(subs={q1: 0, q2: 0, q3: 0, q4: 0, q5: 0, q6: 0}))
-
-# T_total = simplify(T0_G * R_corr)
 
 
 def get_forward(angles):
