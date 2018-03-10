@@ -46,7 +46,7 @@ def handle_calculate_IK(req):
             )
 
             # Populate response for the IK request
-	        joint_trajectory_point.positions = get_inverse([px, py, pz], (roll, pitch, yaw))
+	    joint_trajectory_point.positions = get_inverse([px, py, pz], (roll, pitch, yaw))
             joint_trajectory_list.append(joint_trajectory_point)
 
         rospy.loginfo("length of Joint Trajectory List: %s" % len(joint_trajectory_list))
