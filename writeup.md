@@ -2,14 +2,11 @@
 
 [//]: # (Image References)
 
--[x] Screenshot with showing joint angles
--[ ] Screenshot of completed pick and place
--[x] DH Parameter diagram
-
 [joints]: ./misc_images/joint_screenshot.png
 [dh_params]: ./misc_images/dh_params.png
 [dh_diagram]: ./misc_images/dh_diagram.jpg
 [joints_2_and_3]: misc_images/joints2and3.png
+[pick_and_place]: misc_images/pick_and_place.png
 
 ### Forward Kinematics
 #### Theory
@@ -225,3 +222,20 @@ of the matrix and performing trig operations.
 theta4 = atan2(r33, -r13)
 theta5 = atan2(sqrt(r22 ** 2 + r21 ** 2), r23)
 theta6 = atan2(-r22, r21)
+
+### Results
+I chose to write all of my kinematics code in a separate file a run it outside of ROS first, and I believe that my extra
+unit tests allowed me to finish this much more quickly than if I had run the simulation each time.
+
+The robot successfully moves to each position, and the only issue I see is some extra rotation in joints 4 and 6. 
+Sometimes joints 4 and 6 have large angles that cancel each other out while theta5 is small. This doesn't affect the 
+end position or orientation, but it adds extra motion that takes time.
+
+I noticed that the simulation often moves too quickly to grip the cylinder, but that's not a fault of the kinematics in 
+this case. I fixed it by adding this to line 327 in the /src/trajectory_sampler.cpp file:
+
+`ros::Duration(2.0).sleep();`
+
+Then everything worked great!
+
+![Pick and Place][pick_and_place]
