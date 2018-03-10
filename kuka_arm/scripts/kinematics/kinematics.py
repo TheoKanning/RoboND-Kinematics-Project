@@ -36,6 +36,20 @@ T4_5 = BASE_T.subs({alpha: alpha4, a: a4, d: d5, q: q5}).subs(s)
 T5_6 = BASE_T.subs({alpha: alpha5, a: a5, d: d6, q: q6}).subs(s)
 T6_G = BASE_T.subs({alpha: alpha6, a: a6, d: d7, q: q7}).subs(s)
 
+
+def print_matrix(matrix):
+    # print in markdown table format
+    print("col 1 | col 2 | col 3 | col 4")
+    print("---|---|---|---")
+    for row in range(matrix.shape[0]):
+        output = ""
+        for col in range(matrix.shape[1]):
+            output += str(matrix[row, col])
+            if col != matrix.shape[1] - 1:
+                output += " | "
+        print(output)
+
+
 # Gripper link orientation correction
 R_z = Matrix([[cos(np.pi), -sin(np.pi), 0, 0],
               [sin(np.pi), cos(np.pi), 0, 0],
@@ -50,6 +64,26 @@ R_y = Matrix([[cos(-np.pi/2), 0, sin(-np.pi/2), 0],
 R_corr = R_z * R_y
 R_corr3 = R_corr[:3, :3]
 
+r = symbols('r')
+p = symbols('p')
+y = symbols('y')
+R_xtest = Matrix([[1, 0, 0],
+                  [0, cos(r), -sin(r)],
+                  [0, sin(r), cos(r)]])
+
+R_ytest = Matrix([[cos(p), 0, sin(p)],
+              [0, 1, 0],
+              [-sin(p), 0, cos(p)]])
+
+R_ztest = Matrix([[cos(y), -sin(y), 0],
+              [sin(y), cos(y), 0],
+              [0, 0, 1]])
+
+R_corrtest = Matrix([[0, 0, 1],
+                    [0, -1, 0],
+                    [1, 0, 0]])
+
+print_matrix(simplify(R_corrtest*R_ztest * R_ytest * R_xtest))
 
 def get_forward(angles):
     """
