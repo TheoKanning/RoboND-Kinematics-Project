@@ -28,6 +28,7 @@ BASE_T = Matrix([[cos(q), -sin(q), 0, a],
                  [sin(q) * sin(alpha), cos(q) * sin(alpha), cos(alpha), cos(alpha) * d],
                  [0, 0, 0, 1]])
 
+# Substitute DH parameters into base matrix to create joint transforms
 T0_1 = BASE_T.subs({alpha: alpha0, a: a0, d: d1, q: q1}).subs(s)
 T1_2 = BASE_T.subs({alpha: alpha1, a: a1, d: d2, q: q2}).subs(s)
 T2_3 = BASE_T.subs({alpha: alpha2, a: a2, d: d3, q: q3}).subs(s)
@@ -62,28 +63,6 @@ R_y = Matrix([[cos(-np.pi/2), 0, sin(-np.pi/2), 0],
               [0, 0, 0, 1]])
 
 R_corr = R_z * R_y
-R_corr3 = R_corr[:3, :3]
-
-r = symbols('r')
-p = symbols('p')
-y = symbols('y')
-R_xtest = Matrix([[1, 0, 0],
-                  [0, cos(r), -sin(r)],
-                  [0, sin(r), cos(r)]])
-
-R_ytest = Matrix([[cos(p), 0, sin(p)],
-              [0, 1, 0],
-              [-sin(p), 0, cos(p)]])
-
-R_ztest = Matrix([[cos(y), -sin(y), 0],
-              [sin(y), cos(y), 0],
-              [0, 0, 1]])
-
-R_corrtest = Matrix([[0, 0, 1],
-                    [0, -1, 0],
-                    [1, 0, 0]])
-
-print_matrix(simplify(R_corrtest*R_ztest * R_ytest * R_xtest))
 
 def get_forward(angles):
     """
@@ -169,15 +148,24 @@ def create_rotation_matrix(angles):
     return R_z * R_y * R_x
 
 
+def get_corrected_total_rotation(angles):
+    """
+    Return the rotation matrix corresponding to the given gripper angles, taking into account the correction matrix
+    :param angles: [roll, pitch, yaw] in radians
+    :return: 3x3 Matrix
+    """
+    return create_rotation_matrix(angles) * R_corr[:3, :3]
+
+
 def get_wrist_center(ee_position, ee_orientation):
     """
     Return the wrist center for a given ee position and orientation
     """
     gripper_position = Matrix(ee_position)
-    r0_6 = create_rotation_matrix(ee_orientation)
+    r0_6 = get_corrected_total_rotation(ee_orientation)
 
     # d7 is distance from joint 6 to gripper
-    displacement = r0_6 * R_corr3 * Matrix([[0], [0], [d7]]).evalf(subs=s)
+    displacement = r0_6 * Matrix([[0], [0], [d7]]).evalf(subs=s)
     wc_position = gripper_position - displacement
 
     return wc_position
@@ -225,7 +213,7 @@ def get_inverse(position, orientation):
     theta1, theta2, theta3 = get_first_three_joints(wc)
 
     r0_3 = (T0_1 * T1_2 * T2_3).evalf(subs={q1: theta1, q2: theta2, q3: theta3})[:3, :3]
-    r0_6 = create_rotation_matrix(orientation) * R_corr3
+    r0_6 = get_corrected_total_rotation(orientation)
     r3_6 = Transpose(r0_3) * r0_6
     theta4, theta5, theta6 = wrist_angles_from_transform(r3_6)
     return theta1, theta2, theta3, theta4, theta5, theta6

@@ -2,20 +2,22 @@
 
 [//]: # (Image References)
 
--[ ] Screenshot with showing joint angles
+-[x] Screenshot with showing joint angles
 -[ ] Screenshot of completed pick and place
 -[x] DH Parameter diagram
 
-
-[image2]: ./misc_images/misc3.png
-[image3]: ./misc_images/misc2.png
+[joints]: ./misc_images/joint_screenshot.png
 [dh_params]: ./misc_images/dh_params.png
 [dh_diagram]: ./misc_images/dh_diagram.jpg
+[joints_2_and_3]: misc_images/joints2and3.png
 
 ### Forward Kinematics
 #### Theory
 The process of calculating a robot's end effector pose from its joint angles is known as *Forward Kinematics*. Each joint
 produces a transformation, and this chain of transformation matrices gives the final end effector pose. 
+
+![Joint Screenshot][joints]
+
 #### DH Table
 In order to calculate forward kinematics, we need a mathematical representation of the robot's joints. Each joint could 
 be represented as a set of 6 values, three for position and three for rotation. 
@@ -29,7 +31,7 @@ possible transformations in a single revolute joint. They are as follows:
 - d : Joint offset
 - theta : Joint angle, this is the only part that changes for revolute joints
 
-![alt text][dh_params]
+![dh example][dh_params]
 
 In order to calculate DH parameters, each joint must be assigned a coordinate system. The Z axis must be the joint's axis
 of rotation, but otherwise each axis is chosen in order to make as many parameters equal to zero as possible.
@@ -156,35 +158,70 @@ cos(p)*cos(y) | sin(p)*sin(r)*cos(y) - sin(y)*cos(r) | sin(p)*cos(r)*cos(y) + si
 0 | 0 | 0 | 1
 
 ### Inverse Kinematics
+As its name implies, Inverse Kinematics is the opposite of Forward Kinematics. Instead of calculating the pose of an end
+effector, we take a desired pose and calculate the require joint angles to produce it. 
+
 #### Wrist Center
+The key to inverse kinematics is using extra degrees of freedom to decouple the end effector's position from its 
+orientation. By taking the end effector's orientation and working backwards, we can easily calculate the position of 
+joints 4, 5, and 6. These joints share a common origin, known as the Wrist Center. 
+
+Once the wrist center is known, joints 4, 5, and 6 can determine the orientation of the gripper, and joints 1, 2, and 3 
+determine the position of the wrist.
+
+The wrist center is calculated in the following steps:
+##### 1. Calculate total transformation matrix
+Use the desired end effector position and angles to calculate the total transformation matrix, T0_G.
+
+##### 2. Extract rotation component from total transformation
+The top left 3x3 of the total transformation T0_G is the corresponding rotation matrix. Extract it and call it R0_6.
+
+##### 3. Move backwards from end effector to get wrist center
+R0_6 defines the angle between the wrist center and the end effector. Since the distance between them is also known, we
+can now calculate the wrist center directly.
+
+EE = WC + R0_6 * [0, 0, d]
+
+WC = EE - R0_6 * [0, 0, d] where d is the Z distance from joint 6 to the gripper according the DH diagram.
+
 #### Joints 1-3
-#### Joint 4-6
+Now that the wrist center is known, we can decouple the joints into two sets. The first set (1, 2, and 3) determines the
+position of the wrist, and the other (4, 5, and 6) determines the orientation of the gripper.
 
-#### 1. Run the forward_kinematics demo and evaluate the kr210.urdf.xacro file to perform kinematic analysis of Kuka KR210 robot and derive its DH parameters.
+Joints 1, 2, and 3 can be calculated using trigonometry alone. First, project the robot arm onto the XY plane. The angle
+formed by the wrist center and origin is theta1.
 
-Here is an example of how to include an image in your writeup.
+theta1 = atan2(WC_y, WC_x)
 
+Next, draw the robot in a vertical plane as shown below. Note that the origin is Joint 2 (a1, d1).
 
-#### 2. Using the DH parameter table you derived earlier, create individual transformation matrices about each joint. In addition, also generate a generalized homogeneous transform between base_link and gripper_link using only end-effector(gripper) pose.
+![alt text][joints_2_and_3]
 
+Link2, link3, and the distance from 2 to the WC (D2_wc) form a triangle. Each length can be calculated now using values 
+from the DH table.
 
+- link2=a2
+- link3=sqrt(d4^2 + a3^2)
+- D2_wc=sqrt((WC_x - a1)^2 + (WC_y - d1)^2)
 
+The interior angles of the triangle can now be calculated using the law of cosines and then used to get theta2 and theta3.
 
-#### 3. Decouple Inverse Kinematics problem into Inverse Position Kinematics and inverse Orientation Kinematics; doing so derive the equations to calculate all individual joint angles.
+theta2 = pi/2 - interior_angle_2 - atan2(WC_y - d1, WC_x - a1)
 
-And here's where you can draw out and show your math for the derivation of your theta angles. 
+Theta3 requires a small correction because link three contains a perpendicular offset of a3.
 
-![alt text][image2]
+theta3 = pi/2 - interior_angle_3 + atan2(a3, d4)
+ 
+#### Joints 4-6
+Joints 4, 5, and 6 determine the orientation of the gripper relative to the wrist center. This orientation change is 
+also known as R3_6, and can be calculated as follows.
 
-### Project Implementation
+- Calculate R0_3 using theta1, theta2, and theta3
+- R3_6 = transpose(R0_3) * R0_6
 
-#### 1. Fill in the `IK_server.py` file with properly commented python code for calculating Inverse Kinematics based on previously performed Kinematic Analysis. Your code must guide the robot to successfully complete 8/10 pick and place cycles. Briefly discuss the code you implemented and your results. 
+This matrix R3_6 is the sum of all rotations of joints 4, 5, and 6. Each angle can be found by taking a symbolic version
+of the matrix and performing trig operations.
 
-
-Here I'll talk about the code, what techniques I used, what worked and why, where the implementation might fail and how I might improve it if I were going to pursue this project further.  
-
-
-And just for fun, another example image:
-![alt text][image3]
-
-
+theta4 = atan2(r33, -r13)
+theta5 = atan2(sqrt(r22 ** 2 + r21 ** 2), r23)
+theta6 = atan2(-r22, r21)
