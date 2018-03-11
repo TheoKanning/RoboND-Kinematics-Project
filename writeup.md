@@ -26,7 +26,7 @@ possible transformations in a single revolute joint. They are as follows:
 - alpha : The twist angle between one joint axis and the next
 - a : Joint length
 - d : Joint offset
-- theta : Joint angle, this is the only part that changes for revolute joints
+- theta : Joint angle, this is the only variable for revolute joints
 
 ![dh example][dh_params]
 
@@ -40,9 +40,9 @@ axes in the top left are the frame used by the URDF file.
 ![DH Parameter Diagram][dh_diagram]
 
 Note that Joints 4, 5, and 6 share a common origin in my diagram even though that is not the case in the URDF. The joint
-origins can be moved arbitrarily along their Z axes, and this was done to create a spherical wrist. The parameter d_g is
-a composite of Joint 6's offset from it assigned origin in my diagram and the distance from the gripper to joint 6 in 
-the URDF file.
+origins can be moved arbitrarily along their Z axes, and this was done to create a spherical wrist, which I'll explain 
+in detail later. The parameter d_g is a composite of Joint 6's offset from it assigned origin in my diagram and the 
+distance from the gripper to joint 6 in the URDF file.
 
 Here's the complete DH table filled in with values form the URDF file:
 
@@ -67,7 +67,8 @@ sin(theta)*cos(alpha) | cos(theta)*cos(alpha) | -sin(alpha) | -d*sin(alpha)
 sin(theta)*sin(alpha) | cos(theta)*sin(alpha) | cos(alpha) | d *cos(alpha) 
 0 | 0 | 0 | 1
 
-The transformation matrices for each joint are as follows:
+The transformation matrix for each joint is created by substituting values from the DH table into the above matrix. Each
+transformation matrix is given below.
 
 ##### T0_1
 col 1 | col 2 | col 3 | col 4
@@ -140,7 +141,7 @@ col 1 | col 2 | col 3 | col 4
 0 | 0 | 0 | 1
 
 #### Total Transformation
-The total transformation matrix from base to gripper can be calculated from the gripper's position and orientation.
+The total transformation matrix T0_G can be calculated directly from the gripper's position and orientation.
 In the 4x4 transformation matrix, the top left 3X3 matrix is the rotation (including correction matrix), the top right 
 3X1 is the translation, and the bottom row is [0, 0, 0, 1].
 
@@ -216,12 +217,24 @@ also known as R3_6, and can be calculated as follows.
 - Calculate R0_3 using theta1, theta2, and theta3
 - R3_6 = transpose(R0_3) * R0_6
 
-This matrix R3_6 is the sum of all rotations of joints 4, 5, and 6. Each angle can be found by taking a symbolic version
-of the matrix and performing trig operations.
+This matrix R3_6 is the sum of all rotations of joints 4, 5, and 6. Each angle can be found by taking a generating a 
+symbolic version of the matrix and solving for each angle.
 
-theta4 = atan2(r33, -r13)
-theta5 = atan2(sqrt(r22 ** 2 + r21 ** 2), r23)
-theta6 = atan2(-r22, r21)
+R3_6 = top left 3x3 of T3_4 * T4_5 * T5_6 
+
+col 1 | col 2 | col 3 | col 4
+---|---|---|---
+-sin(q4)*sin(q6) + cos(q4)*cos(q5)*cos(q6) | -sin(q4)*cos(q6) - sin(q6)*cos(q4)*cos(q5) | -sin(q5)*cos(q4) 
+sin(q5)*cos(q6) | -sin(q5)*sin(q6) | cos(q5) 
+-sin(q4)*cos(q5)*cos(q6) - sin(q6)*cos(q4) | sin(q4)*sin(q6)*cos(q5) - cos(q4)*cos(q6) | sin(q4)*sin(q5) 
+
+Using trig identities, we solve for each angle as follows.
+
+- theta4 = atan2(r33, -r13)
+- theta5 = atan2(sqrt(r22 ** 2 + r21 ** 2), r23)
+- theta6 = atan2(-r22, r21)
+
+The real theta values are then calculated from the previously calculated R3_6, and then inverse kinematics is complete!
 
 ### Results
 I chose to write all of my kinematics code in a separate file a run it outside of ROS first, and I believe that my extra

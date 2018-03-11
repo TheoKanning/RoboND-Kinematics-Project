@@ -51,6 +51,8 @@ def print_matrix(matrix):
         print(output)
 
 
+print_matrix((T3_4 * T4_5 * T5_6))
+
 # Gripper link orientation correction
 R_z = Matrix([[cos(np.pi), -sin(np.pi), 0, 0],
               [sin(np.pi), cos(np.pi), 0, 0],
